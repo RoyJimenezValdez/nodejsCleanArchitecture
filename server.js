@@ -18,6 +18,7 @@ app.post(`/posts`, makeCallback(addPost))
 // app.patch(`${apiRoot}/comments/:id`, makeCallback(patchComment))
 // app.patch(`${apiRoot}/comments`, makeCallback(patchComment))
 // app.get(`${apiRoot}/comments`, makeCallback(getComments))
+// test 2
 app.use(makeCallback(notFound))
 
 
