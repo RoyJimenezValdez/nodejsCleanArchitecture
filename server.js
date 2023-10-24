@@ -18,6 +18,8 @@ app.post(`/posts`, makeCallback(addPost))
 // app.patch(`${apiRoot}/comments/:id`, makeCallback(patchComment))
 // app.patch(`${apiRoot}/comments`, makeCallback(patchComment))
 // app.get(`${apiRoot}/comments`, makeCallback(getComments))
+console.log('here')
+// warning codacy test 
 app.use(makeCallback(notFound))
 
 
