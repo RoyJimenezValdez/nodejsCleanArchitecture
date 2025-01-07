@@ -1,0 +1,47 @@
+name: Trigger deploy Nogin API [DEV]
+
+on:
+  workflow_dispatch:
+    inputs:
+      target-branch:
+        description: 'Target branch to deploy deploy-dev'
+        required: true
+        default: 'test-trigger-deploy' 
+
+jobs:
+  rebase-and-push:
+    name: Rebase and Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Checkout the `dev` branch and pull the latest changes
+      - name: Checkout and Pull Dev Branch
+        run: |
+          git checkout test-trigger
+          git pull origin test-trigger
+
+      # Checkout the target branch deploy-dev, pull, and rebase on `dev`
+      - name: Checkout and Rebase Target Branch
+        run: |
+          git checkout ${{ github.event.inputs.target-branch }}
+          git pull origin ${{ github.event.inputs.target-branch }}
+          git rebase test-trigger
+
+      # Log the changes for confirmation
+      - name: Show Git Log
+        run: git log --oneline -n 10
+
+      # Push the rebased branch back to the remote
+      - name: Push Rebases to Target Branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git push --force-with-lease origin ${{ github.event.inputs.target-branch }}
+
+      # Notify the action is done
+      - name: Complete
+        run: echo "Rebase and deployment process started successfully!"
