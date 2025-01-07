@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       from-branch:
-        description: 'base branch to deploy dev'
+        description: 'base branch to deploy (ex. dev)'
         required: true
         default: 'test-deploy' 
       target-branch:
-        description: 'Target branch to deploy deploy-dev'
+        description: 'Target branch to deploy (ex. deploy-dev)'
         required: true
         default: 'master' 
 
