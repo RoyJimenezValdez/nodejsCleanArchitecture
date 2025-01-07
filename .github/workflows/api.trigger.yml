@@ -39,7 +39,12 @@ jobs:
           git fetch 
           git checkout ${{ github.event.inputs.target-branch }}
           git pull origin ${{ github.event.inputs.target-branch }}
-          git rebase  ${{ github.event.inputs.from-branch }} 
+          git rebase ${{ github.event.inputs.from-branch }} || (
+          echo "Conflict detected. Resolving conflicts automatically." &&
+          git rebase --abort &&
+          git merge -s recursive -X theirs ${{ github.event.inputs.from-branch }} &&
+          git rebase ${{ github.event.inputs.from-branch }}
+          )
           
 
       # Log the changes for confirmation
