@@ -20,7 +20,7 @@ app.post(`/posts`, makeCallback(addPost))
 // app.get(`${apiRoot}/comments`, makeCallback(getComments))  
 app.use(makeCallback(notFound))
 
-// MERGE THIS 3
+// MERGE THIS 4
 
 
 // listen for requests
