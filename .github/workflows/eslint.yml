@@ -40,7 +40,11 @@ jobs:
           --config .eslintrc.js
           --ext .js,.jsx,.ts,.tsx
           --format @microsoft/eslint-formatter-sarif
-          --output-file eslint-results.sarif
+          --output-file eslint-results.sarif || (
+            echo "Rebase failed. Resolving conflicts automatically." &&
+            git rebase --abort &&
+            git merge --strategy=recursive -X theirs ${{ github.event.inputs.from-branch }}
+          )
         continue-on-error: true
 
       - name: Upload analysis results to GitHub
@@ -48,3 +52,7 @@ jobs:
         with:
           sarif_file: eslint-results.sarif
           wait-for-processing: true
+
+
+
+              git push --set-upstream origin feat-1
