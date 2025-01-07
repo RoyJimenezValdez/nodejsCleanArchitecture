@@ -1,12 +1,16 @@
-name: Trigger deploy Nogin API [DEV]
+name: Trigger deploy Nogin API
 
 on:
   workflow_dispatch:
     inputs:
+      from-branch:
+        description: 'base branch to deploy dev'
+        required: true
+        default: 'test-deploy' 
       target-branch:
         description: 'Target branch to deploy deploy-dev'
         required: true
-        default: 'test-trigger-deploy' 
+        default: 'master' 
 
 jobs:
   rebase-and-push:
@@ -18,14 +22,14 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # Checkout the `test-trigger-2` branch and pull the latest changes
+      # Checkout the `${{ github.event.inputs.from-branch }}` branch and pull the latest changes
       - name: Checkout and Pull Dev Branch
         run: |
           git fetch 
-          git checkout test-trigger-2
-          git pull origin test-trigger-2
+          git checkout ${{ github.event.inputs.from-branch }}
+          git pull origin ${{ github.event.inputs.from-branch }}
 
-      # Checkout the target branch deploy-dev, pull, and rebase on `test-trigger-2`
+      # Checkout the target branch deploy-dev, pull, and rebase on `${{ github.event.inputs.from-branch }}`
       - name: Checkout and Rebase Target Branch
         run: |
           set -x  # Enable command tracing
@@ -33,15 +37,10 @@ jobs:
           git config --global user.name "RoyJimenezValdez"
           git status
           git fetch 
-          git branch 
           git checkout ${{ github.event.inputs.target-branch }}
           git pull origin ${{ github.event.inputs.target-branch }}
-          git branch 
-          git rebase --reapply-cherry-picks test-trigger-2 || (
-            git rebase --abort &&
-            echo "Conflict detected. Attempting conflict resolution." &&
-            git rebase --strategy-option=theirs test-trigger-2
-          )
+          git rebase  ${{ github.event.inputs.from-branch }} 
+          
 
       # Log the changes for confirmation
       - name: Show Git Log
