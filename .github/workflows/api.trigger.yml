@@ -6,13 +6,13 @@ on:
       from-branch:
         description: 'Base branch to deploy (ex. dev)'
         required: true
-        default: 'dev'
+        default: 'test-deploy-2'
       target-branch:
         description: 'Target branch to deploy (ex. deploy-dev)'
         required: true
         type: choice
         options:
-          - deploy-dev
+          - master
           - deploy-main
           - deploy-next
 
