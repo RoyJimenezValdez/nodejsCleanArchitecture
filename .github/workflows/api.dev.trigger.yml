@@ -21,15 +21,15 @@ jobs:
       # Checkout the `dev` branch and pull the latest changes
       - name: Checkout and Pull Dev Branch
         run: |
-          git checkout test-trigger
-          git pull origin test-trigger
+          git checkout test-workflow
+          git pull origin test-workflow
 
       # Checkout the target branch deploy-dev, pull, and rebase on `dev`
       - name: Checkout and Rebase Target Branch
         run: |
           git checkout ${{ github.event.inputs.target-branch }}
           git pull origin ${{ github.event.inputs.target-branch }}
-          git rebase test-trigger
+          git rebase test-workflow
 
       # Log the changes for confirmation
       - name: Show Git Log
