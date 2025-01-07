@@ -1,0 +1,47 @@
+name: Trigger deploy Nogin API V2
+
+on:
+  workflow_dispatch:
+    inputs:
+      from-branch:
+        description: 'Base branch to deploy (ex. dev)'
+        required: true
+        default: 'dev'
+      target-branch:
+        description: 'Target branch to deploy (ex. deploy-dev)'
+        required: true
+        type: choice
+        options:
+          - master
+          - deploy-main
+          - deploy-next
+
+jobs:
+  rebase-and-push:
+    name: Rebase and Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Perform the rebase process
+      - name: Rebase and Push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git fetch origin
+          git checkout ${{ github.event.inputs.target-branch }}
+          git pull origin ${{ github.event.inputs.target-branch }}
+          git fetch origin ${{ github.event.inputs.from-branch }}:${{ github.event.inputs.from-branch }}
+          git rebase ${{ github.event.inputs.from-branch }} || (
+            echo "Rebase failed. Resolving conflicts automatically." &&
+            git rebase --abort &&
+            git merge --strategy=recursive -X theirs ${{ github.event.inputs.from-branch }}
+          )
+          git push --force origin ${{ github.event.inputs.target-branch }}
+
+      # Notify the action is complete
+      - name: Complete
+        run: echo "Rebase and deployment process completed successfully!"
