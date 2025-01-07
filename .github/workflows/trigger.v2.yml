@@ -35,11 +35,7 @@ jobs:
           git checkout ${{ github.event.inputs.target-branch }}
           git pull origin ${{ github.event.inputs.target-branch }}
           git fetch origin ${{ github.event.inputs.from-branch }}:${{ github.event.inputs.from-branch }}
-          git rebase ${{ github.event.inputs.from-branch }} || (
-            echo "Rebase failed. Resolving conflicts automatically." &&
-            git rebase --abort &&
-            git merge --strategy=recursive -X theirs ${{ github.event.inputs.from-branch }}
-          )
+          git rebase ${{ github.event.inputs.from-branch }} 
           git push --force origin ${{ github.event.inputs.target-branch }}
 
       # Notify the action is complete
