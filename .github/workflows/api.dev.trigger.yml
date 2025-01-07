@@ -18,20 +18,30 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # Checkout the `dev` branch and pull the latest changes
+      # Checkout the `test-workflow` branch and pull the latest changes
       - name: Checkout and Pull Dev Branch
         run: |
+          git fetch 
           git checkout test-workflow
           git pull origin test-workflow
 
-      # Checkout the target branch deploy-dev, pull, and rebase on `dev`
+      # Checkout the target branch deploy-dev, pull, and rebase on `test-workflow`
       - name: Checkout and Rebase Target Branch
         run: |
+          set -x  # Enable command tracing
+          git config --global user.email "royjimval@gmail.com"
+          git config --global user.name "RoyJimenezValdez"
+          git status
           git fetch 
           git branch 
           git checkout ${{ github.event.inputs.target-branch }}
           git pull origin ${{ github.event.inputs.target-branch }}
-          git rebase test-workflow
+          git branch 
+          git rebase --reapply-cherry-picks test-workflow || (
+            git rebase --abort &&
+            echo "Conflict detected. Attempting conflict resolution." &&
+            git rebase --strategy-option=theirs test-workflow
+          )
 
       # Log the changes for confirmation
       - name: Show Git Log

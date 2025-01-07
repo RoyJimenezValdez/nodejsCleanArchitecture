@@ -17,10 +17,8 @@ app.post(`/posts`, makeCallback(addPost))
 // app.delete(`${apiRoot}/comments`, makeCallback(deleteComment))
 // app.patch(`${apiRoot}/comments/:id`, makeCallback(patchComment))
 // app.patch(`${apiRoot}/comments`, makeCallback(patchComment))
-// app.get(`${apiRoot}/comments`, makeCallback(getComments))
+// app.get(`${apiRoot}/comments`, makeCallback(getComments))  
 app.use(makeCallback(notFound))
-
-// MERGE THIS
 
 
 // listen for requests
