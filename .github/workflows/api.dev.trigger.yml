@@ -27,6 +27,8 @@ jobs:
       # Checkout the target branch deploy-dev, pull, and rebase on `dev`
       - name: Checkout and Rebase Target Branch
         run: |
+          git fetch 
+          git branch 
           git checkout ${{ github.event.inputs.target-branch }}
           git pull origin ${{ github.event.inputs.target-branch }}
           git rebase test-workflow
