@@ -20,6 +20,8 @@ app.post(`/posts`, makeCallback(addPost))
 // app.get(`${apiRoot}/comments`, makeCallback(getComments))
 app.use(makeCallback(notFound))
 
+// ADD NEW TRIGGER 
+
 
 // listen for requests
 app.listen(3000, () => {
