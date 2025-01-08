@@ -6,15 +6,11 @@ on:
       from-branch:
         description: 'Base branch to deploy (ex. dev)'
         required: true
-        default: 'dev'
-      target-branch:
-        description: 'Target branch to deploy (ex. deploy-dev)'
-        required: true
         type: choice
         options:
-          - master
-          - deploy-main
-          - deploy-next
+          - deploy-dev
+          - next
+          - main
 
 jobs:
   rebase-and-push:
@@ -26,17 +22,37 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      # Determine the target branch dynamically
+      - name: Set Target Branch
+        id: set-target-branch
+        run: |
+          case "${{ github.event.inputs.from-branch }}" in
+            deploy-dev)
+              echo "target-branch=master" >> $GITHUB_ENV
+              ;;
+            next)
+              echo "target-branch=deploy-next" >> $GITHUB_ENV
+              ;;
+            main)
+              echo "target-branch=deploy-main" >> $GITHUB_ENV
+              ;;
+            *)
+              echo "Error: Unsupported from-branch value" >&2
+              exit 1
+              ;;
+          esac
+
       # Perform the rebase process
       - name: Rebase and Push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git fetch origin
-          git checkout ${{ github.event.inputs.target-branch }}
-          git pull origin ${{ github.event.inputs.target-branch }}
+          git checkout ${{ env.target-branch }}
+          git pull origin ${{ env.target-branch }}
           git fetch origin ${{ github.event.inputs.from-branch }}:${{ github.event.inputs.from-branch }}
           git rebase ${{ github.event.inputs.from-branch }} 
-          git push --force origin ${{ github.event.inputs.target-branch }}
+          git push --force origin ${{ env.target-branch }}
 
       # Notify the action is complete
       - name: Complete
