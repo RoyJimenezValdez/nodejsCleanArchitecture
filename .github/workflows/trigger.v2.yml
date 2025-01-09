@@ -50,33 +50,27 @@ jobs:
           git config --global user.email "rjimenez@nogin.com"
           git config --global user.name "RoyJimenezValdez"
           git fetch origin
-
-          # Identify the new commits added to the target branch
-          echo "New commits being added to the target branch:"
-            git checkout ${{ github.event.inputs.from-branch }}
-
-            NEW_COMMITS=$(git log origin/${{ env.target-branch }}..HEAD --pretty=format:"%h - %s (%an)")
-            echo "$NEW_COMMITS"
-
           git checkout ${{ env.target-branch }}
           git pull origin ${{ env.target-branch }}
           git fetch origin ${{ github.event.inputs.from-branch }}:${{ github.event.inputs.from-branch }}
-          
 
+          # Identify the new commits coming from the source branch
+          echo "Commits from source branch (${ github.event.inputs.from-branch }) being added to target branch (${ env.target-branch }):"
+          
+          NEW_COMMITS=$(git log origin/${{ env.target-branch }}..origin/${{ github.event.inputs.from-branch }} --pretty=format:"%h - %s (%an)")
+          echo "$NEW_COMMITS"
 
           # Save new commits to environment variable
           echo "merged-commits=$NEW_COMMITS" >> $GITHUB_ENV
 
           # Rebase and handle conflicts
-          git rebase ${{ github.event.inputs.from-branch }} || (
+          git rebase origin/${{ github.event.inputs.from-branch }} || (
               echo "Rebase failed. Resolving conflicts automatically." &&
               git rebase --abort &&
-              git merge --strategy=recursive -X theirs ${{ github.event.inputs.from-branch }} --allow-unrelated-histories
+              git merge --strategy=recursive -X theirs origin/${{ github.event.inputs.from-branch }} --allow-unrelated-histories
           )
 
           git push --force origin ${{ env.target-branch }}
-
-
 
       # Send merged commits to Slack
       - name: Notify Slack
@@ -84,7 +78,7 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
           if [ -n "${{ env.merged-commits }}" ]; then
-            MESSAGE="*=== Triggering deploment for  ${{ env.target-branch }} ===* \n *Commits Merged into ${{ env.target-branch }}:* \n${{ env.merged-commits }}"
+            MESSAGE="*=== Triggering deployment for ${{ env.target-branch }} ===* \n *Commits Merged from ${{ github.event.inputs.from-branch }} into ${{ env.target-branch }}:* \n${{ env.merged-commits }}"
           else
             MESSAGE="No commits were merged into ${{ env.target-branch }}."
           fi
