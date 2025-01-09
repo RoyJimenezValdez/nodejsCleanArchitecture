@@ -1,4 +1,4 @@
-name: Trigger deploy Nogin API
+name: Trigger deploy Nogin API V2
 
 on:
   workflow_dispatch:
@@ -6,15 +6,11 @@ on:
       from-branch:
         description: 'Base branch to deploy (ex. dev)'
         required: true
-        default: 'test-deploy-2'
-      target-branch:
-        description: 'Target branch to deploy (ex. deploy-dev)'
-        required: true
         type: choice
         options:
-          - master
-          - deploy-main
-          - deploy-next
+          - dev-deploy
+          - next
+          - main
 
 jobs:
   rebase-and-push:
@@ -26,41 +22,66 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # Checkout the `${{ github.event.inputs.from-branch }}` branch and pull the latest changes
-      - name: Checkout and Pull Dev Branch
+      # Determine the target branch dynamically
+      - name: Set Target Branch
+        id: set-target-branch
         run: |
-          git fetch 
-          git checkout ${{ github.event.inputs.from-branch }}
-          git pull origin ${{ github.event.inputs.from-branch }}
+          case "${{ github.event.inputs.from-branch }}" in
+            dev-deploy)
+              echo "target-branch=master" >> $GITHUB_ENV
+              ;;
+            next)
+              echo "target-branch=deploy-next" >> $GITHUB_ENV
+              ;;
+            main)
+              echo "target-branch=deploy-main" >> $GITHUB_ENV
+              ;;
+            *)
+              echo "Error: Unsupported from-branch value" >&2
+              exit 1
+              ;;
+          esac
 
-      # Checkout the target branch deploy-dev, pull, and rebase on `${{ github.event.inputs.from-branch }}`
-      - name: Checkout and Rebase Target Branch
-        run: |
-          set -x  # Enable command tracing
-          git config --global user.email "rjimenez@nogin.com"
-          git config --global user.name "RoyJimenezValdez"
-          git status
-          git fetch 
-          git checkout ${{ github.event.inputs.target-branch }}
-          git pull origin ${{ github.event.inputs.target-branch }}
-          git rebase ${{ github.event.inputs.from-branch }} || (
-          echo "Conflict detected. Resolving conflicts automatically." &&
-          git rebase --abort &&
-          git merge --strategy=recursive -X theirs ${{ github.event.inputs.from-branch }} --allow-unrelated-histories
-          )
-          
-
-      # Log the changes for confirmation
-      - name: Show Git Log
-        run: git log --oneline -n 10
-
-      # Push the rebased branch back to the remote
-      - name: Push Rebases to Target Branch
+      # Perform the rebase process
+      - name: Rebase and Push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git push --force-with-lease origin ${{ github.event.inputs.target-branch }}
+          git config --global user.email "rjimenez@nogin.com"
+          git config --global user.name "RoyJimenezValdez"
+          git fetch origin
+          git checkout ${{ env.target-branch }}
+          git pull origin ${{ env.target-branch }}
+          git fetch origin ${{ github.event.inputs.from-branch }}:${{ github.event.inputs.from-branch }}
 
-      # Notify the action is done
+          # Store the hash of the current HEAD of the target branch
+          BASE_COMMIT=$(git rev-parse HEAD)
+
+          # Rebase and handle conflicts
+          git rebase origin/${{ github.event.inputs.from-branch }} || (
+              echo "Rebase failed. Resolving conflicts automatically." &&
+              git rebase --abort &&
+              git merge --strategy=recursive -X theirs origin/${{ github.event.inputs.from-branch }} --allow-unrelated-histories
+          )
+
+          git push --force origin ${{ env.target-branch }}
+
+          # Generate comparison link
+          COMPARE_LINK="https://github.com/${{ github.repository }}/compare/$BASE_COMMIT...$(git rev-parse HEAD)"
+          echo "Compare link: $COMPARE_LINK"
+          echo "compare-link=$COMPARE_LINK" >> $GITHUB_ENV
+
+      # Send Slack notification with the comparison link
+      - name: Notify Slack
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          COMPARE_LINK: ${{ env.compare-link }}
+        run: |
+          MESSAGE="*=== Triggering deployment for ${{ env.target-branch }} ===* \n*Comparison Link:* <$COMPARE_LINK|Click here to see the changes>"
+          curl -X POST -H 'Content-type: application/json' \
+          --data "{\"text\": \"$MESSAGE\"}" \
+          $SLACK_WEBHOOK_URL
+
+      # Notify the action is complete
       - name: Complete
-        run: echo "Rebase and deployment process started successfully!"
+        run: echo "Rebase and deployment process completed successfully!"
