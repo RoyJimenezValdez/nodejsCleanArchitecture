@@ -55,10 +55,9 @@ jobs:
           git fetch origin ${{ github.event.inputs.from-branch }}:${{ github.event.inputs.from-branch }}
 
           # Identify the new commits coming from the source branch
-          echo "Commits from source branch (${{ github.event.inputs.from-branch }}) being added to target branch (${{ env.target-branch }}):"
-          
-          NEW_COMMITS=$(git log origin/${{ env.target-branch }}..origin/${{ github.event.inputs.from-branch }} --pretty=format:"%h - %s (%an)")
-          echo "$NEW_COMMITS"
+          echo "Commits from source branch (${ github.event.inputs.from-branch }) being added to target branch (${ env.target-branch }):"
+          NEW_COMMITS=$(git log origin/${{ env.target-branch }}..origin/${{ github.event.inputs.from-branch }} --pretty=format:"%h - %s (%an)" | jq -R -s -c 'split("\n")[:-1]')
+          echo "New commits: $NEW_COMMITS"
 
           # Save new commits to environment variable
           echo "merged-commits=$NEW_COMMITS" >> $GITHUB_ENV
@@ -76,9 +75,10 @@ jobs:
       - name: Notify Slack
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          MERGED_COMMITS: ${{ env.merged-commits }}
         run: |
-          if [ -n "${{ env.merged-commits }}" ]; then
-            MESSAGE="*=== Triggering deployment for ${{ env.target-branch }} ===* \n *Commits Merged from ${{ github.event.inputs.from-branch }} into ${{ env.target-branch }}:* \n${{ env.merged-commits }}"
+          if [ -n "${MERGED_COMMITS}" ]; then
+            MESSAGE="*=== Triggering deployment for ${{ env.target-branch }} ===* \n *Commits Merged from ${{ github.event.inputs.from-branch }} into ${{ env.target-branch }}:* \n$(echo $MERGED_COMMITS | jq -r '.[]' | sed 's/^/ - /')"
           else
             MESSAGE="No commits were merged into ${{ env.target-branch }}."
           fi
