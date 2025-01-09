@@ -53,17 +53,30 @@ jobs:
           git checkout ${{ env.target-branch }}
           git pull origin ${{ env.target-branch }}
           git fetch origin ${{ github.event.inputs.from-branch }}:${{ github.event.inputs.from-branch }}
+          
+          echo "Before rebase, commits in target branch:"
+          git log --oneline origin/${{ env.target-branch }}
+          
+          echo "Before rebase, commits in source branch:"
+          git log --oneline ${{ github.event.inputs.from-branch }}
+
+          # Rebase and handle conflicts
           git rebase ${{ github.event.inputs.from-branch }} || (
               echo "Rebase failed. Resolving conflicts automatically." &&
               git rebase --abort &&
               git merge --strategy=recursive -X theirs ${{ github.event.inputs.from-branch }} --allow-unrelated-histories
           )
 
+          echo "After rebase, commits in target branch:"
+          git log --oneline origin/${{ env.target-branch }}
+
           git push --force origin ${{ env.target-branch }}
 
-          # Capture the merged commits
-          COMMITS=$(git log ${{ env.target-branch }}..${{ github.event.inputs.from-branch }} --pretty=format:"%h - %s (%an)")
-          echo "merged-commits=$COMMITS" >> $GITHUB_ENV
+          # Capture new commits
+          NEW_COMMITS=$(git log origin/${{ env.target-branch }}..${{ github.event.inputs.from-branch }} --pretty=format:"%h - %s (%an)")
+          echo "New commits added to target branch:"
+          echo "$NEW_COMMITS"
+          echo "merged-commits=$NEW_COMMITS" >> $GITHUB_ENV
 
       # Send merged commits to Slack
       - name: Notify Slack
