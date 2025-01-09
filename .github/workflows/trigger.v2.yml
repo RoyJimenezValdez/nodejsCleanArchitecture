@@ -61,9 +61,13 @@ jobs:
 
           git push --force origin ${{ env.target-branch }}
 
-          # Capture the merged commits
-          COMMITS=$(git log ${{ env.target-branch }}..${{ github.event.inputs.from-branch }} --pretty=format:"%h - %s (%an)")
-          echo "merged-commits=$COMMITS" >> $GITHUB_ENV
+          # Print commits going to the target branch
+          echo "Fetching commits that are being added to the target branch:"
+          NEW_COMMITS=$(git log origin/${{ env.target-branch }}..${{ github.event.inputs.from-branch }} --pretty=format:"%h - %s (%an)")
+          echo "$NEW_COMMITS"
+
+          # Capture commits in a reusable environment variable
+          echo "merged-commits=$NEW_COMMITS" >> $GITHUB_ENV
 
       # Send merged commits to Slack
       - name: Notify Slack
