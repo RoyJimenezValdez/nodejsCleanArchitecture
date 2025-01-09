@@ -20,11 +20,7 @@ app.post(`/posts`, makeCallback(addPost))
 // app.get(`${apiRoot}/comments`, makeCallback(getComments))  
 app.use(makeCallback(notFound))
 
-// DEPLOY 
-// SERVER
-// V1
-// with slack
-// TEST 6
+// DEPLOY 7 
 
 // listen for requests
 app.listen(3000, () => {
