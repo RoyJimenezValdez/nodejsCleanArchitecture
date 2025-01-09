@@ -71,13 +71,25 @@ jobs:
           echo "Compare link: $COMPARE_LINK"
           echo "compare-link=$COMPARE_LINK" >> $GITHUB_ENV
 
-      # Send Slack notification with the comparison link
+          # Get current date and time
+          CURRENT_DATETIME=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          echo "current-datetime=$CURRENT_DATETIME" >> $GITHUB_ENV
+
+      # Send Slack notification with the comparison link, date, time, and actor
       - name: Notify Slack
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           COMPARE_LINK: ${{ env.compare-link }}
+          CURRENT_DATETIME: ${{ env.current-datetime }}
         run: |
-          MESSAGE="*=== Triggering deployment for ${{ env.target-branch }} ===* \n*Comparison Link:* <$COMPARE_LINK|Click here to see the changes>"
+          TRIGGERED_BY=${{ github.actor }}
+          MESSAGE="*=== Deployment Triggered ===*\n"
+          MESSAGE+="*Date and Time:* $CURRENT_DATETIME\n"
+          MESSAGE+="*Triggered by:* $TRIGGERED_BY\n"
+          MESSAGE+="*Target Branch:* ${{ env.target-branch }}\n"
+          MESSAGE+="*Source Branch:* ${{ github.event.inputs.from-branch }}\n"
+          MESSAGE+="*Comparison Link:* <$COMPARE_LINK|Click here to see the changes>"
+
           curl -X POST -H 'Content-type: application/json' \
           --data "{\"text\": \"$MESSAGE\"}" \
           $SLACK_WEBHOOK_URL
