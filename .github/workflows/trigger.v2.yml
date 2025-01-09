@@ -47,19 +47,38 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-            git config --global user.email "rjimenez@nogin.com"
-            git config --global user.name "RoyJimenezValdez"
-            git fetch origin
-            git checkout ${{ env.target-branch }}
-            git pull origin ${{ env.target-branch }}
-            git fetch origin ${{ github.event.inputs.from-branch }}:${{ github.event.inputs.from-branch }}
-            git rebase ${{ github.event.inputs.from-branch }} || (
-                echo "Rebase failed. Resolving conflicts automatically." &&
-                git rebase --abort &&
-                git merge --strategy=recursive -X theirs ${{ github.event.inputs.from-branch }} --allow-unrelated-histories
-            )
+          git config --global user.email "rjimenez@nogin.com"
+          git config --global user.name "RoyJimenezValdez"
+          git fetch origin
+          git checkout ${{ env.target-branch }}
+          git pull origin ${{ env.target-branch }}
+          git fetch origin ${{ github.event.inputs.from-branch }}:${{ github.event.inputs.from-branch }}
+          git rebase ${{ github.event.inputs.from-branch }} || (
+              echo "Rebase failed. Resolving conflicts automatically." &&
+              git rebase --abort &&
+              git merge --strategy=recursive -X theirs ${{ github.event.inputs.from-branch }} --allow-unrelated-histories
+          )
 
-            git push --force origin ${{ env.target-branch }}
+          git push --force origin ${{ env.target-branch }}
+
+          # Capture the merged commits
+          COMMITS=$(git log ${{ env.target-branch }}..${{ github.event.inputs.from-branch }} --pretty=format:"%h - %s (%an)")
+          echo "merged-commits=$COMMITS" >> $GITHUB_ENV
+
+      # Send merged commits to Slack
+      - name: Notify Slack
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [ -n "${{ env.merged-commits }}" ]; then
+            MESSAGE="*Commits Merged into ${{ env.target-branch }}:* \n${{ env.merged-commits }}"
+          else
+            MESSAGE="No commits were merged into ${{ env.target-branch }}."
+          fi
+
+          curl -X POST -H 'Content-type: application/json' \
+          --data "{\"text\": \"$MESSAGE\"}" \
+          $SLACK_WEBHOOK_URL
 
       # Notify the action is complete
       - name: Complete
