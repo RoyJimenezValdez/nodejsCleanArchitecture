@@ -55,7 +55,7 @@ jobs:
           git fetch origin ${{ github.event.inputs.from-branch }}:${{ github.event.inputs.from-branch }}
 
           # Identify the new commits coming from the source branch
-          echo "Commits from source branch (${ github.event.inputs.from-branch }) being added to target branch (${ env.target-branch }):"
+          echo "Commits from source branch (${{ github.event.inputs.from-branch }}) being added to target branch (${{ env.target-branch }}):"
           
           NEW_COMMITS=$(git log origin/${{ env.target-branch }}..origin/${{ github.event.inputs.from-branch }} --pretty=format:"%h - %s (%an)")
           echo "$NEW_COMMITS"
