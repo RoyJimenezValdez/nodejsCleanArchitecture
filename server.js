@@ -20,8 +20,8 @@ app.post(`/posts`, makeCallback(addPost))
 // app.get(`${apiRoot}/comments`, makeCallback(getComments))  
 app.use(makeCallback(notFound))
 
-// DEPLOY 15
-// MORE COMMENTS 15
+// DEPLOY 16
+// MORE COMMENTS 16
 
 // listen for requests
 app.listen(3000, () => {

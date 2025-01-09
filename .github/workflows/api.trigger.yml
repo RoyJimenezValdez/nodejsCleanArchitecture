@@ -1,4 +1,4 @@
-name: Trigger deploy Nogin API V2
+name: Trigger deploy Nogin API V1
 
 on:
   workflow_dispatch:
