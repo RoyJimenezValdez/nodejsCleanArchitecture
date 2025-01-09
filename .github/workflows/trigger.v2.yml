@@ -66,10 +66,10 @@ jobs:
 
           git push --force origin ${{ env.target-branch }}
 
-          # Capture commits added by the rebase/merge
+          # Capture commits added during the rebase/merge
           echo "Commits added to the target branch (${{ env.target-branch }}):"
-          NEW_COMMITS=$(git log $BASE_COMMIT..HEAD --pretty=format:"%h - %s (%an)")
-          echo "$NEW_COMMITS"
+          NEW_COMMITS=$(git log $BASE_COMMIT..HEAD --pretty=format:"%h - %s (%an)" | jq -R -s -c 'split("\n")[:-1]')
+          echo "New commits: $NEW_COMMITS"
 
           # Save new commits to environment variable
           echo "merged-commits=$NEW_COMMITS" >> $GITHUB_ENV
@@ -81,7 +81,10 @@ jobs:
           MERGED_COMMITS: ${{ env.merged-commits }}
         run: |
           if [ -n "${MERGED_COMMITS}" ]; then
-            MESSAGE="*=== Triggering deployment for ${{ env.target-branch }} ===* \n *Commits Merged from ${{ github.event.inputs.from-branch }} into ${{ env.target-branch }}:* \n$(echo "$MERGED_COMMITS" | sed 's/^/ - /')"
+            MESSAGE="*=== Triggering deployment for ${{ env.target-branch }} ===* \n *Commits Merged from ${{ github.event.inputs.from-branch }} into ${{ env.target-branch }}:*"
+            echo $MERGED_COMMITS | jq -r '.[]' | while read COMMIT; do
+              MESSAGE="$MESSAGE\n - $COMMIT"
+            done
           else
             MESSAGE="No commits were merged into ${{ env.target-branch }}."
           fi
