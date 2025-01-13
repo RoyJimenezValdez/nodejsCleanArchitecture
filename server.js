@@ -20,7 +20,7 @@ app.post(`/posts`, makeCallback(addPost))
 // app.get(`${apiRoot}/comments`, makeCallback(getComments))  
 app.use(makeCallback(notFound))
 
-// NEW FEATURE
+// NEW FEATURE 2
 
 // listen for requests
 app.listen(3000, () => {
