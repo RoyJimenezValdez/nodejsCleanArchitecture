@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       from-branch:
-        description: 'Base branch to deploy (ex. dev)'
+        description: 'Base branch to deploy'
         required: true
         type: choice
         options:
@@ -42,7 +42,7 @@ jobs:
               ;;
           esac
 
-      # Perform the rebase process
+      # Perform the rebase process if the rebase fails because of history changes it will do a merge
       - name: Rebase and Push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -64,7 +64,7 @@ jobs:
               git merge --strategy=recursive -X theirs origin/${{ github.event.inputs.from-branch }} --allow-unrelated-histories
           )
 
-          git push --force origin ${{ env.target-branch }}
+          git push ${{ env.target-branch }}
 
           # Generate comparison link
           COMPARE_LINK="https://github.com/${{ github.repository }}/compare/$BASE_COMMIT...$(git rev-parse HEAD)"
@@ -75,7 +75,7 @@ jobs:
           CURRENT_DATETIME=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
           echo "current-datetime=$CURRENT_DATETIME" >> $GITHUB_ENV
 
-      # Send Slack notification with the comparison link, date, time, and actor
+      # Send Slack notification
       - name: Notify Slack
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
