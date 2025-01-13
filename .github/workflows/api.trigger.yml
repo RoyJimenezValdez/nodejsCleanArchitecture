@@ -64,7 +64,7 @@ jobs:
               git merge --strategy=recursive -X theirs origin/${{ github.event.inputs.from-branch }} --allow-unrelated-histories
           )
 
-          git push ${{ env.target-branch }}
+          git push origin ${{ env.target-branch }}
 
           # Generate comparison link
           COMPARE_LINK="https://github.com/${{ github.repository }}/compare/$BASE_COMMIT...$(git rev-parse HEAD)"
